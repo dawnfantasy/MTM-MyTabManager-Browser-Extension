@@ -1,0 +1,659 @@
+/* Tab Manager */
+
+/* Reset default margins and set font */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+/* Main layout container */
+#main-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Left panel for collections */
+#collections-panel {
+  flex: 0 0 280px;
+  padding: 15px;
+  background: #f4f5f7;
+  overflow-y: auto;
+  min-width: 150px;
+  max-width: 50%;
+  display: flex;
+  flex-direction: column; /* Enable vertical stacking */
+}
+
+/* Dividers between panels */
+#divider-left, #divider-right {
+  width: 5px;
+  background: #ddd;
+  cursor: col-resize;
+  transition: background 0.2s;
+}
+
+#divider-left:hover, #divider-left.dragging,
+#divider-right:hover, #divider-right.dragging {
+  background: #bbb;
+}
+
+/* Middle panel for selected collection content */
+#collection-content-panel {
+  flex: 0 0 800px;
+  padding: 15px;
+  background: #f0f8ff;
+  overflow-y: auto;
+  min-width: 833px;
+  max-width: 50%;
+}
+
+#collection-content-panel.drag-over {
+  background: #e0f0ff;
+}
+
+/* Right panel for all tabs */
+#tabs-panel {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background: #fff;
+  width: 1435px;
+}
+
+/* Heading style with centering for specific panels */
+#collections-panel h2,
+#collection-content-panel h2,
+#tabs-panel h2 {
+  margin: 0 0 15px;
+  font-size: 18px;
+  color: #333;
+  text-align: center; /* Center the titles */
+}
+
+/* Generic button styles */
+button {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  background: #ddd;
+  color: #333;
+  margin: 5px;
+}
+
+button:hover {
+  background: #ccc;
+}
+
+/* Add Collection button inside groups */
+.add-collection-btn {
+  background: #0079bf;
+  color: white;
+  font-size: 16px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto 0; /* Center at bottom */
+}
+
+.add-collection-btn:hover {
+  background: #026aa7;
+}
+
+/* Rename button for groups */
+.rename-group-btn {
+  background: #0d6efd;
+  color: white;
+  font-size: 12px;
+  padding: 3px 8px;
+  position: absolute;
+  top: 5px;
+  right: 30px; /* Next to Delete */
+}
+
+.rename-group-btn:hover {
+  background: #0b5ed7;
+}
+
+/* Up button for groups */
+.up-group-btn {
+  background: #6c757d;
+  color: white;
+  font-size: 12px;
+  padding: 3px 8px;
+  position: absolute;
+  top: 5px;
+  right: 55px; /* Positioned left of Rename */
+}
+
+.up-group-btn:hover {
+  background: #5a6268;
+}
+
+/* Down button for groups */
+.down-group-btn {
+  background: #6c757d;
+  color: white;
+  font-size: 12px;
+  padding: 3px 8px;
+  position: absolute;
+  top: 5px;
+  right: 80px; /* Positioned left of Up */
+}
+
+.down-group-btn:hover {
+  background: #5a6268;
+}
+
+/* Add Group button (centered at bottom) */
+#add-group {
+  background: #f4f5f7; /* Match panel background */
+  color: #888;
+  font-size: 24px;
+  width: 100%; /* Full width replacing 50px */
+  height: 50px;
+  border: 3px dotted #888;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0; /* Replace margin-top: auto with 0 */
+  align-self: center; /* Center horizontally */
+  transition: all 0.2s ease;
+}
+
+#add-group:hover {
+  background: #e0e0e0;
+  border-color: #666;
+  color: #666;
+}
+
+/* Export Collections button */
+#export-collections {
+  background: #17a2b8;
+  color: white;
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+}
+
+#export-collections:hover {
+  background: #138496;
+}
+
+/* Import Collections button container */
+#import-collections-container {
+  width: 100%;
+  margin: 5px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* Import Collections button */
+#import-collections-btn {
+  background: #6f42c1;
+  color: white;
+  padding: 8px;
+  flex-grow: 1;
+}
+
+#import-collections-btn:hover {
+  background: #5e37a6;
+}
+
+/* Hidden file input for import */
+#import-collections-file {
+  display: none;
+}
+
+/* Open All Tabs button */
+#open-all-tabs {
+  background: #28a745;
+  color: white;
+}
+
+/* Open All in New Window button */
+#open-all-new-window {
+  background: #007bff;
+  color: white;
+}
+
+#open-all-tabs:hover {
+  background: #218838;
+}
+
+#open-all-new-window:hover {
+  background: #0069d9;
+}
+
+/* Window group container in right panel */
+.window-group {
+  margin-bottom: 20px;
+  padding: 10px 30px 10px 10px;
+  background: #ebecf0;
+  border-radius: 5px;
+  transition: background 0.2s, opacity 0.2s;
+  cursor: move;
+  position: relative;
+}
+
+.window-group.drag-over {
+  background: #dfe1e6;
+}
+
+.window-group.dragging {
+  opacity: 0.7;
+}
+
+/* Container for tab cards within window groups or collections */
+.tab-card-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 100px;
+  perspective: 1000px;
+}
+
+.card-container {
+  perspective: 1000px;
+}
+
+/* Generic tab card styling */
+.tab-card {
+  background: #fff;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  width: 200px;
+  min-height: 80px;
+  user-select: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: translateZ(0);
+  position: relative;
+  cursor: pointer;
+}
+
+/* Specific styling for tab cards in right and middle panels */
+#tabs-panel .tab-card,
+#collection-content-panel .tab-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100px;
+  width: 180px;
+  padding: 8px 8px 8px 32px; /* Extra left padding for icon */
+}
+
+/* Dragging animation for tab cards in right panel */
+#tabs-panel .tab-card.dragging {
+  opacity: 0.7;
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  z-index: 1000;
+}
+
+/* Bounce animation for dropped tab cards */
+#tabs-panel .tab-card.dropped {
+  animation: bounce 0.5s ease;
+}
+
+/* Icon styling for right and middle panel tab cards */
+#tabs-panel .tab-card .card-icon,
+#collection-content-panel .tab-card .card-icon {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 10;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Icon types for right and middle panels */
+#tabs-panel .tab-card .pdf-icon,
+#collection-content-panel .tab-card .pdf-icon {
+  background-image: url('pdf.png');
+}
+
+#tabs-panel .tab-card .favicon-icon,
+#collection-content-panel .tab-card .favicon-icon {
+  background-image: var(--favicon-url, url('default-icon.png'));
+}
+
+#tabs-panel .tab-card .empty-icon,
+#collection-content-panel .tab-card .empty-icon {
+  background-color: #e0e0e0;
+  border: 1px solid #ccc;
+}
+
+/* Title section in right and middle panel tab cards */
+#tabs-panel .tab-card .title-section,
+#collection-content-panel .tab-card .title-section {
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.2;
+  max-height: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-bottom: 4px;
+}
+
+/* URL section in right and middle panel tab cards */
+#tabs-panel .tab-card .url-section,
+#collection-content-panel .tab-card .url-section {
+  font-size: 11px;
+  color: #777;
+  line-height: 1.2;
+  max-height: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+
+/* ID section in right panel tab cards (removed from middle panel) */
+#tabs-panel .tab-card .id-section {
+  font-size: 11px;
+  color: #555;
+  text-align: right;
+}
+
+/* Collection group container in left panel */
+.collection-group {
+  background: #e9ecef;
+  border: 2px dashed #bbb;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Stack content vertically */
+}
+
+/* Group header */
+.collection-group h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #444;
+  font-weight: bold;
+  display: inline-block;
+}
+
+/* Delete button for groups */
+.collection-group .delete-group-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: #dc3545;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.collection-group .delete-group-btn:hover {
+  background: #c82333;
+}
+
+/* Container for collections within a group */
+.collection-group .collection-list {
+  min-height: 50px;
+  flex-grow: 1; /* Allow it to take available space */
+}
+
+/* Collection card styling */
+.collection {
+  background: #fff;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 5px 15px 1px 15px; /* Updated padding: top 5px, right 15px, bottom 1px, left 15px */
+  width: 180px;
+  min-height: 60px; /* Reduced from 80px for less height */
+  cursor: move;
+  user-select: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform: translateZ(0);
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.collection h3 {
+  margin: 0;
+  font-size: 20px; /* Increased from implicit default (~16px) for larger title */
+  line-height: 1.2; /* Adjusted for readability */
+  color: #333;
+}
+
+/* Drag-over states for collections and groups */
+.collection.drag-over, .collection-group.drag-over {
+  background: #dfe1e6;
+}
+
+/* Dragging animation for collections */
+.collection.dragging {
+  opacity: 0.7;
+  transform: scale(1.05) rotate(2deg);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  z-index: 1000;
+}
+
+/* Bounce animation for dropped collections */
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(5px); }
+  80% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+.collection.dropped {
+  animation: bounce 0.5s ease;
+}
+
+/* Hover effect for collections */
+.collection:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Selected collection highlight */
+.collection.selected {
+  background: #e4f0f6;
+}
+
+/* Buttons within collections */
+.collection-buttons {
+  margin-top: 5px; /* Reduced from 10px for less space under buttons */
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.collection-buttons .rename-btn {
+  background: #0d6efd;
+  color: white;
+  padding: 5px 15px;
+  font-size: 14px;
+  border-radius: 0.25rem;
+}
+
+.collection-buttons .rename-btn:hover {
+  background: #0b5ed7;
+}
+
+.collection-buttons .delete-btn {
+  background: #dc3545;
+  color: white;
+  padding: 5px 15px;
+  font-size: 14px;
+  border-radius: 0.25rem;
+}
+
+.collection-buttons .delete-btn:hover {
+  background: #c82333;
+}
+
+/* Tab count in collections */
+.collection .tab-count {
+  font-size: 12px;
+  color: #777;
+  margin-left: 5px;
+}
+
+/* Remove button for tabs in middle panel (replacing with close-btn) */
+.remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: #eb5a46;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: #d9432f;
+}
+
+.tab-card:hover .remove-btn {
+  opacity: 1;
+}
+
+/* Close button for tabs in right and middle panels */
+.close-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: #eb5a46;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #d9432f;
+}
+
+.tab-card:hover .close-btn {
+  opacity: 1;
+}
+
+/* Close button for window groups */
+.close-window-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: #ff9800;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.close-window-btn:hover {
+  background: #f57c00;
+}
+
+/* Sort button for window groups */
+.sort-tabs-btn {
+  position: absolute;
+  top: 5px;
+  right: 30px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: #6c757d;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sort-tabs-btn:hover {
+  background: #5a6268;
+}
+
+/* Hibernate button for window groups */
+.hibernate-btn {
+  position: absolute;
+  top: 5px;
+  right: 55px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: #007bff;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.hibernate-btn:hover {
+  background: #0069d9;
+}
+
+/* Window group header */
+.window-group h3 {
+  display: inline-block;
+  margin: 0 0 5px 0;
+}
+
+/* PDF icon for middle panel collections */
+.pdf-icon {
+  width: 16px;
+  height: 16px;
+  margin-left: 5px;
+  background: url('pdf.png') no-repeat center;
+  background-size: contain;
+}

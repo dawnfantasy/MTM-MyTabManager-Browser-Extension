@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "My Tab Manager",
+  "version": "1.0",
+  "permissions": ["tabs", "storage", "windows"],
+  "action": {
+    "default_icon": "icon.png"
+  },
+  "chrome_url_overrides": {
+        "newtab": "index.html"
+    },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "128": "icon.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T"
+      }
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["index.html", "styles.css", "script.js", "pdf.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
