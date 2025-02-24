@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
   "name": "My Tab Manager",
-  "version": "1.0",
+  "version": "0.3.35",
+  "description": "A browser extension that organizes, saves, and manages your browser tabs effortlessly.",
   "permissions": ["tabs", "storage", "windows"],
   "action": {
     "default_icon": "icon.png"

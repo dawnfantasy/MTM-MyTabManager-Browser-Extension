@@ -3,34 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Tab Manager</title>
+  <title>My Tab Manager</title> <!-- Updated title -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="main-container">
-    <div id="collections-panel">
-      <h2>Collections</h2>
-      <button id="export-collections">Export Collections</button>
-      <div id="import-collections-container">
-        <button id="import-collections-btn">Import Collections</button>
-        <input type="file" id="import-collections-file" accept=".json">
-      </div>
-      <div id="collections-list"></div>
-    </div>
-    <div id="divider-left"></div>
-    <div id="collection-content-panel">
-      <h2>Collection Content</h2>
-      <div id="collection-content"></div>
-      <button id="open-all-tabs">Open All Tabs</button>
-      <button id="open-all-new-window">Open All in New Window</button>
-    </div>
-    <div id="divider-right"></div>
-    <div id="tabs-panel">
-      <h2>All Tabs</h2>
-      <div id="tabs-content"></div>
-    </div>
+<!-- Main container for the three-panel layout -->
+<div id="main-container">
+  <!-- Left panel for collections -->
+  <div id="collections-panel">
+    <!-- Header with title and menu added dynamically via script.js -->
+    <div id="collections-list"></div>
+    <!-- Add Group button added dynamically via script.js -->
   </div>
-  <script type="module" src="dragStart.js"></script>
-  <script type="module" src="script.js"></script>
+
+  <!-- Divider between left and middle panels -->
+  <div id="divider-left"></div>
+
+  <!-- Middle panel for selected collection content -->
+  <div id="collection-content-panel">
+    <h2>Stored Cards</h2>
+    <div id="collection-content"></div>
+    <button id="open-all-tabs">Open All Tabs</button>
+    <button id="open-all-new-window">Open All in New Window</button>
+  </div>
+
+  <!-- Divider between middle and right panels -->
+  <div id="divider-right"></div>
+
+  <!-- Right panel for all live tabs -->
+  <div id="tabs-panel">
+    <h2>Live Groups & Live Cards</h2>
+    <div id="tabs-content"></div>
+  </div>
+</div>
+
+<!-- Import dragStart.js as a module -->
+<script type="module">
+  import { dragStart, dragState, scrollPosition } from './dragStart.js';
+  window.dragStart = dragStart;
+  window.dragState = dragState;
+  window.scrollPosition = scrollPosition;
+</script>
+
+<!-- Load main script as a module -->
+<script type="module" src="script.js"></script>
 </body>
 </html>

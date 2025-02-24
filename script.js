@@ -1,3 +1,5 @@
+/* Tab Manager v0.3.35 */
+
 import { dragStart, dragState, scrollPosition } from './dragStart.js';
 
 // Export state variables for dragStart.js
@@ -17,9 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabsContent = document.getElementById('tabs-content'); // Container for all tabs
   const openAllTabsButton = document.getElementById('open-all-tabs'); // Button to open all tabs in selected collection
   const openAllNewWindowButton = document.getElementById('open-all-new-window'); // Button to open all tabs in new window
-  const exportCollectionsButton = document.getElementById('export-collections'); // Export button
-  const importCollectionsButton = document.getElementById('import-collections-btn'); // Import button
-  const importCollectionsFile = document.getElementById('import-collections-file'); // Hidden file input
 
   // State for tab monitoring
   let previousTabs = []; // Store the previous state of browser tabs for comparison
@@ -1178,6 +1177,36 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCollectionContent();
   }
 
+  // Create header with Collections title and menu button
+  const header = document.createElement('div');
+  header.className = 'panel-header';
+  header.innerHTML = `
+    <h2>Collections</h2>
+    <button id="collections-menu-btn">⋮</button>
+    <div id="collections-menu" class="dropdown-menu">
+      <button id="export-collections">Export Collections</button>
+      <div id="import-collections-container">
+        <button id="import-collections-btn">Import Collections</button>
+        <input type="file" id="import-collections-file" accept=".json">
+      </div>
+    </div>
+  `;
+  collectionsPanel.insertBefore(header, collectionsPanel.firstChild);
+
+  // Menu button and dropdown logic
+  const menuBtn = document.getElementById('collections-menu-btn');
+  const menu = document.getElementById('collections-menu');
+  menuBtn.addEventListener('click', () => {
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!menuBtn.contains(e.target) && !menu.contains(e.target)) {
+      menu.style.display = 'none';
+    }
+  });
+
   // Create static Add Group button
   const addGroupBtn = document.createElement('button');
   addGroupBtn.id = 'add-group';
@@ -1192,9 +1221,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Add event listeners for export/import buttons and open all tabs
-  exportCollectionsButton.addEventListener('click', exportCollections);
-  importCollectionsButton.addEventListener('click', () => importCollectionsFile.click());
-  importCollectionsFile.addEventListener('change', importCollections);
+  document.getElementById('export-collections').addEventListener('click', exportCollections);
+  document.getElementById('import-collections-btn').addEventListener('click', () => document.getElementById('import-collections-file').click());
+  document.getElementById('import-collections-file').addEventListener('change', importCollections);
   openAllTabsButton.addEventListener('click', openAllTabs);
   openAllNewWindowButton.addEventListener('click', openAllInNewWindow);
 
