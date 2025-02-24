@@ -1,5 +1,3 @@
-/* Tab Manager */
-
 import { dragStart, dragState, scrollPosition } from './dragStart.js';
 
 // Export state variables for dragStart.js
@@ -80,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let dropIndex = row * cardsPerRow + col;
     dropIndex = Math.max(0, Math.min(dropIndex, tabCards.length)); // Clamp between 0 and length
-
     return dropIndex;
   }
 
@@ -180,9 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       selectedCollection.tabs.forEach(tab => {
-        chrome.tabs.create({ 
-          windowId: currentWindow.id, 
-          url: tab.url 
+        chrome.tabs.create({
+          windowId: currentWindow.id,
+          url: tab.url
         }, (newTab) => {
           if (chrome.runtime.lastError) {
             console.error('Error opening tab:', chrome.runtime.lastError);
@@ -258,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="tab-card-container"></div>
         `;
         const cardContainer = groupDiv.querySelector('.tab-card-container');
-        
+
         groupDiv.addEventListener('dragstart', dragStart);
         groupDiv.addEventListener('dragend', () => cleanupDrag(groupDiv));
         groupDiv.addEventListener('dragover', dragOverTab);
@@ -295,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return domainA.localeCompare(domainB);
           });
-          
+
           const tabIds = windowTabs.map(tab => tab.id);
           tabIds.forEach((tabId, newIndex) => {
             chrome.tabs.move(tabId, { windowId: parseInt(windowId), index: newIndex }, () => {
@@ -326,8 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           windowTabs.forEach(tab => {
-            hibernateCollection.tabs.push({ 
-              title: tab.title, 
+            hibernateCollection.tabs.push({
+              title: tab.title,
               url: tab.url,
               favIconUrl: tab.favIconUrl || '' // Discard id and windowId
             });
@@ -362,11 +359,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- UI Rendering Functions ---
-  // Create a tab card for the right panel (live cards)
+  // Create a tab card for the right panel (live cards) - tabId hidden from UI
   function createTabCard(tab) {
     const card = document.createElement('div');
     card.className = 'tab-card';
-    card.dataset.tabId = tab.id.toString(); // Ensure tabId is set as a string
+    card.dataset.tabId = tab.id.toString(); // Keep tabId in dataset for functionality, not displayed
     card.draggable = true; // Make tab card draggable
     const isPdf = tab.url.toLowerCase().endsWith('.pdf');
     const hasFavicon = tab.favIconUrl && !isPdf;
@@ -381,7 +378,6 @@ document.addEventListener('DOMContentLoaded', () => {
       <span class="card-icon ${iconClass}" ${faviconStyle}></span>
       <div class="title-section">${tab.title}</div>
       <div class="url-section">${tab.url}</div>
-      <div class="id-section">ID: ${tab.id}</div>
       <button class="close-btn">X</button>
     `;
     // Drag-and-drop listeners for tab card
@@ -467,11 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
     colDiv.dataset.index = index; // DOM index remains as-is for drag purposes
     colDiv.draggable = true;
     colDiv.innerHTML = `
-      <h3>${col.name} <span class="tab-count">(${col.tabs.length})</span></h3>
-      <div class="collection-buttons">
-        <button class="rename-btn">Rename</button>
-        <button class="delete-btn">Delete</button>
-      </div>
+      <h3>${col.name} <span class="tab-count">(${col.tabs.length})</span><button class="rename-btn">R</button></h3>
+      <button class="delete-btn">X</button>
     `;
     // Drag-and-drop listeners for collection
     colDiv.addEventListener('dragstart', dragStart);
@@ -550,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
       groupDiv.addEventListener('dragenter', (e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        if (dragState.type === 'collection') groupDiv.classList.add('drag-over'); // Only for collections
+        if (dragState.type === 'collection') groupDiv.classList.add('drag-over');
       });
 
       // Add Collection button for this group
@@ -778,13 +771,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function drop(e, targetGroupId = -1) {
     e.preventDefault(); // Prevent default browser behavior (e.g., opening URLs)
     e.stopPropagation(); // Stop event bubbling to parent elements
-  
+
     // Identify the drop target: live group, collection, collection group, or middle panel
-    const target = e.target.closest('.window-group') || 
-                  e.target.closest('.collection:not(.dragging)') || 
-                  e.target.closest('.collection-group') || 
-                  e.target.closest('#collection-content-panel');
-    
+    const target = e.target.closest('.window-group') ||
+        e.target.closest('.collection:not(.dragging)') ||
+        e.target.closest('.collection-group') ||
+        e.target.closest('#collection-content-panel');
+
     // Scenario 1: No valid drop target detected (e.g., dropped outside panels)
     // - Action: Log error and cleanup if something was dragged, then exit
     if (!target) {
@@ -792,67 +785,67 @@ document.addEventListener('DOMContentLoaded', () => {
       if (dragState.element) cleanupDrag(dragState.element); // Clean up dragging state
       return;
     }
-  
+
     // Scenario 2: Nothing is being dragged (invalid drag state)
     // - Action: Log error and exit if dragState is incomplete
     if (!dragState.type || (!dragState.element && dragState.type !== 'window-group')) {
       console.error('Drop failed: No dragged element in dragState', { dragState, target });
       return;
     }
-  
+
     // Scenario 3: Dragging a collection from the left panel onto another collection or group
     // - Condition: Target is a collection, group, or within collections-list
     // - Action: Reorder the collection within or across groups
     if (dragState.type === 'collection' && (target.classList.contains('collection') || target.classList.contains('collection-group') || target.closest('#collections-list'))) {
       const collection = collectionsData[dragState.groupId].collections[dragState.pos];
       collectionsData[dragState.groupId].collections.splice(dragState.pos, 1);
-  
+
       let newGroupId = targetGroupId;
       if (newGroupId === -1) { // If not provided, determine from target
         const closestGroup = target.closest('.collection-group');
         newGroupId = closestGroup ? parseInt(closestGroup.dataset.groupId) : dragState.groupId;
       }
-  
+
       // Determine where to insert within the target group’s collection list
-      const targetContainer = target.classList.contains('collection-group') 
-        ? target.querySelector('.collection-list') 
-        : target.closest('.collection-list') || collectionsList.querySelector(`.collection-group[data-group-id="${newGroupId}"] .collection-list`);
+      const targetContainer = target.classList.contains('collection-group')
+          ? target.querySelector('.collection-list')
+          : target.closest('.collection-list') || collectionsList.querySelector(`.collection-group[data-group-id="${newGroupId}"] .collection-list`);
       const afterElement = getDragAfterElement(targetContainer, e.clientX, e.clientY); // Find insertion point
-      const newPos = afterElement 
-        ? collectionsData[newGroupId].collections.findIndex(c => c.collectionId === parseInt(afterElement.dataset.index.split('-')[1]))
-        : collectionsData[newGroupId].collections.length; // Position after element or append
-  
+      const newPos = afterElement
+          ? collectionsData[newGroupId].collections.findIndex(c => c.collectionId === parseInt(afterElement.dataset.index.split('-')[1]))
+          : collectionsData[newGroupId].collections.length; // Position after element or append
+
       if (afterElement && newPos !== -1) {
         collectionsData[newGroupId].collections.splice(newPos, 0, collection); // Insert before next collection
       } else {
         collectionsData[newGroupId].collections.push(collection); // Append to end
       }
-  
+
       collection.groupId = newGroupId;
       collection.pos = newPos;
-  
+
       saveCollections(); // Persist changes
       renderCollections(); // Refresh left panel
       if (selectedCollectionIndex === collection.collectionId) renderCollectionContent();
       cleanupDrag(dragState.element); // Reset drag state and UI
-    } 
-    
-    // Scenario 4: Dragging a live card from the right panel onto a collection
-    // - Condition: Target is a collection, source is 'tabs-panel-tab'
+    }
+
+        // Scenario 4: Dragging a live card from the right panel onto a collection
+        // - Condition: Target is a collection, source is 'tabs-panel-tab'
     // - Action: Append the live card to the target collection, discarding id and windowId; if Shift is pressed, close the tab
     else if (dragState.type === 'tab-card' && target.classList.contains('collection') && e.dataTransfer.getData('source') === 'tabs-panel-tab') {
-      console.log('Dropping live card from tabs panel onto existing collection', { 
-        tabId: dragState.tabData ? dragState.tabData.id : 'unknown', 
+      console.log('Dropping live card from tabs panel onto existing collection', {
+        tabId: dragState.tabData ? dragState.tabData.id : 'unknown',
         target: { groupId: targetGroupId, class: target.className },
         shiftKey: e.shiftKey
       });
-  
+
       if (!dragState.tabData) {
         console.error('Dragged live card data not available');
         cleanupDrag(dragState.element);
         return;
       }
-  
+
       const indexParts = target.dataset.index.split('-').map(Number); // Get target indices
       const [groupId, pos] = indexParts;
       const targetCollection = collectionsData[groupId].collections[pos];
@@ -863,7 +856,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       targetCollection.tabs.push(cleanTabData); // Step 1: Append cleaned tab data to collection
       saveCollections(); // Save the collection addition immediately
-  
+
       // Step 2: If Shift key is pressed, remove the live card from the live group (close the tab)
       if (e.shiftKey) {
         const tabId = dragState.tabData.id;
@@ -887,20 +880,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedCollectionIndex === targetCollection.collectionId) renderCollectionContent();
         cleanupDrag(dragState.element);
       }
-    } 
-    
-    // Scenario 5: Dragging a stored card from the middle panel onto a collection
-    // - Condition: Target is a collection, source is 'collection-content-tab'
+    }
+
+        // Scenario 5: Dragging a stored card from the middle panel onto a collection
+        // - Condition: Target is a collection, source is 'collection-content-tab'
     // - Action: Move tab to target collection unless it’s the same collection
     else if (dragState.type === 'tab-card' && target.classList.contains('collection') && e.dataTransfer.getData('source') === 'collection-content-tab') {
       console.log('Dropping stored card from middle panel onto collection');
-  
+
       if (!dragState.tabData) {
         console.error('Dragged stored card data not available');
         cleanupDrag(dragState.element);
         return;
       }
-  
+
       const sourceGroupId = dragState.groupId;
       const sourcePos = dragState.pos;
       const sourceCollection = collectionsData[sourceGroupId].collections[sourcePos];
@@ -908,45 +901,45 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetIndexParts = target.dataset.index.split('-').map(Number); // Target indices
       const [targetGroupId, targetPos] = targetIndexParts;
       const targetCollection = collectionsData[targetGroupId].collections[targetPos];
-  
+
       if (sourceGroupId === targetGroupId && sourcePos === targetPos) { // Same collection check
         console.log('Dropped stored card on same collection - no action taken');
         cleanupDrag(dragState.element);
         return;
       }
-  
+
       const tab = sourceCollection.tabs.splice(tabIndex, 1)[0]; // Remove tab from source
       targetCollection.tabs.push(tab); // Append to target (already clean from previous drag)
       saveCollections();
       renderCollections();
       renderCollectionContent(); // Refresh middle panel
       cleanupDrag(dragState.element);
-    } 
-    
-    // Scenario 6: Dragging a live card from the right panel onto a live group
-    // - Condition: Target is a live group (window-group)
+    }
+
+        // Scenario 6: Dragging a live card from the right panel onto a live group
+        // - Condition: Target is a live group (window-group)
     // - Action: Reorder within same window or move to new live group
     else if (dragState.type === 'tab-card' && target.classList.contains('window-group') && e.dataTransfer.getData('source') === 'tabs-panel-tab') {
-      console.log('Dropping live card onto live group', { 
-        tabId: dragState.tabData ? dragState.tabData.id : 'unknown', 
-        targetWindowId: target.dataset.windowId 
+      console.log('Dropping live card onto live group', {
+        tabId: dragState.tabData ? dragState.tabData.id : 'unknown',
+        targetWindowId: target.dataset.windowId
       });
-  
+
       if (!dragState.tabData) {
         console.error('Dragged live card data not available');
         cleanupDrag(dragState.element);
         return;
       }
-  
+
       const targetWindowId = parseInt(target.dataset.windowId); // Target window ID
       const sourceWindowId = dragState.tabData.windowId; // Source window ID
       const tabId = dragState.tabData.id; // Tab ID
-  
+
       if (sourceWindowId === targetWindowId) { // Same window: reorder
         const container = target.querySelector('.tab-card-container');
         const dropIndex = getDropPositionInWindowGroup(container, e.clientX, e.clientY); // Calculate new position
         console.log('Reordering live card within live group:', { tabId, targetWindowId, dropIndex });
-  
+
         chrome.tabs.move(tabId, { windowId: targetWindowId, index: dropIndex }, () => {
           if (chrome.runtime.lastError) {
             console.error('Error reordering live card:', chrome.runtime.lastError);
@@ -959,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       } else { // Different window: move and append
         console.log('Moving live card to new live group:', { tabId, fromWindowId: sourceWindowId, toWindowId: targetWindowId });
-  
+
         chrome.tabs.move(tabId, { windowId: targetWindowId, index: -1 }, () => { // -1 appends to end
           if (chrome.runtime.lastError) {
             console.error('Error moving live card to new live group:', chrome.runtime.lastError);
@@ -971,29 +964,29 @@ document.addEventListener('DOMContentLoaded', () => {
           cleanupDrag(dragState.element);
         });
       }
-    } 
-    
-    // Scenario 7: Dragging a live card from the right panel onto the middle panel
-    // - Condition: Target is #collection-content-panel, source is 'tabs-panel-tab'
+    }
+
+        // Scenario 7: Dragging a live card from the right panel onto the middle panel
+        // - Condition: Target is #collection-content-panel, source is 'tabs-panel-tab'
     // - Action: Append live card to the selected collection if one is selected, discarding id and windowId
     else if (dragState.type === 'tab-card' && target.id === 'collection-content-panel' && e.dataTransfer.getData('source') === 'tabs-panel-tab') {
-      console.log('Dropping live card onto middle panel', { 
-        tabId: dragState.tabData ? dragState.tabData.id : 'unknown', 
-        selectedCollectionIndex 
+      console.log('Dropping live card onto middle panel', {
+        tabId: dragState.tabData ? dragState.tabData.id : 'unknown',
+        selectedCollectionIndex
       });
-  
+
       if (!dragState.tabData) {
         console.error('Dragged live card data not available');
         cleanupDrag(dragState.element);
         return;
       }
-  
+
       if (selectedCollectionIndex === null) { // No collection selected: reject
         console.error('No collection selected for live card drop on middle panel - rejecting drop');
         cleanupDrag(dragState.element);
         return;
       }
-  
+
       let targetCollection = null;
       let groupId = -1;
       let pos = -1;
@@ -1006,13 +999,13 @@ document.addEventListener('DOMContentLoaded', () => {
           break;
         }
       }
-  
+
       if (!targetCollection) { // Collection not found: error
         console.error('Selected collection not found in collectionsData', { selectedCollectionIndex });
         cleanupDrag(dragState.element);
         return;
       }
-  
+
       const cleanTabData = {
         title: dragState.tabData.title,
         url: dragState.tabData.url,
@@ -1023,29 +1016,29 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCollections(); // Refresh left panel (tab count)
       renderCollectionContent(); // Refresh middle panel
       cleanupDrag(dragState.element);
-    } 
-    
-    // Scenario 8: Dragging a stored card within the middle panel
-    // - Condition: Target is #collection-content-panel, source is 'collection-content-tab'
+    }
+
+        // Scenario 8: Dragging a stored card within the middle panel
+        // - Condition: Target is #collection-content-panel, source is 'collection-content-tab'
     // - Action: No action required, just cleanup
     else if (dragState.type === 'tab-card' && target.id === 'collection-content-panel' && e.dataTransfer.getData('source') === 'collection-content-tab') {
       console.log('Dropping stored card within middle panel - no action taken');
       cleanupDrag(dragState.element);
       return;
     }
-    
-    // Scenario 9: Dragging a live group from the right panel onto a collection or middle panel
-    // - Condition: Target is a collection or #collection-content-panel
+
+        // Scenario 9: Dragging a live group from the right panel onto a collection or middle panel
+        // - Condition: Target is a collection or #collection-content-panel
     // - Action: Append all tabs from the live group to the target collection, discarding id and windowId
     else if (dragState.type === 'window-group' && (target.classList.contains('collection') || target.id === 'collection-content-panel')) {
-      console.log('Dropping live group onto collection/middle panel', { 
-        windowId: dragState.windowId, 
-        target: { class: target.className, id: target.id } 
+      console.log('Dropping live group onto collection/middle panel', {
+        windowId: dragState.windowId,
+        target: { class: target.className, id: target.id }
       });
-  
-      const collectionIndexParts = target.classList.contains('collection') 
-        ? target.dataset.index.split('-').map(Number) 
-        : (selectedCollectionIndex !== null ? selectedCollectionIndex.split('-').map(Number) : null); // Use selected if middle panel
+
+      const collectionIndexParts = target.classList.contains('collection')
+          ? target.dataset.index.split('-').map(Number)
+          : (selectedCollectionIndex !== null ? selectedCollectionIndex.split('-').map(Number) : null); // Use selected if middle panel
       if (!collectionIndexParts) { // No valid target collection: reject
         console.error('No collection selected for live group drop - rejecting drop');
         cleanupDrag(dragState.element);
@@ -1053,7 +1046,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const [groupId, pos] = collectionIndexParts;
       if (target.classList.contains('collection')) target.classList.remove('over'); // Clear highlight
-  
+
       const windowId = dragState.windowId;
       chrome.tabs.query({ windowId: windowId }, (tabs) => { // Fetch all tabs in the live group
         if (chrome.runtime.lastError) {
@@ -1063,10 +1056,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const targetCollection = collectionsData[groupId].collections[pos];
         tabs.forEach(tab => { // Append each tab, discarding id and windowId
-          targetCollection.tabs.push({ 
-            title: tab.title, 
+          targetCollection.tabs.push({
+            title: tab.title,
             url: tab.url,
-            favIconUrl: tab.favIconUrl || '' 
+            favIconUrl: tab.favIconUrl || ''
           });
         });
         saveCollections();
@@ -1076,29 +1069,29 @@ document.addEventListener('DOMContentLoaded', () => {
         tabsPanel.scrollTop = scrollPosition;
         cleanupDrag(dragState.element);
       });
-    } 
-    
-    // Scenario 10: Dragging a stored card from the middle panel onto a live group
-    // - Condition: Target is a live group (window-group), source is 'collection-content-tab'
+    }
+
+        // Scenario 10: Dragging a stored card from the middle panel onto a live group
+        // - Condition: Target is a live group (window-group), source is 'collection-content-tab'
     // - Action: Open a new tab in the target window with the stored card's URL
     else if (dragState.type === 'tab-card' && target.classList.contains('window-group') && e.dataTransfer.getData('source') === 'collection-content-tab') {
-      console.log('Dropping stored card onto live group', { 
-        url: dragState.tabData ? dragState.tabData.url : 'unknown', 
-        targetWindowId: target.dataset.windowId 
+      console.log('Dropping stored card onto live group', {
+        url: dragState.tabData ? dragState.tabData.url : 'unknown',
+        targetWindowId: target.dataset.windowId
       });
-  
+
       if (!dragState.tabData || !dragState.tabData.url) {
         console.error('Dragged stored card data or URL not available');
         cleanupDrag(dragState.element);
         return;
       }
-  
+
       const targetWindowId = parseInt(target.dataset.windowId); // Target live group window ID
       const url = dragState.tabData.url; // URL from stored card
-  
-      chrome.tabs.create({ 
-        windowId: targetWindowId, 
-        url: url 
+
+      chrome.tabs.create({
+        windowId: targetWindowId,
+        url: url
       }, (newTab) => {
         if (chrome.runtime.lastError) {
           console.error('Error opening new tab in live group:', chrome.runtime.lastError);
@@ -1109,10 +1102,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         cleanupDrag(dragState.element);
       });
-    } 
-    
-    // Scenario 11: Invalid drop combination (e.g., tab card on group, or other unsupported targets)
-    // - Condition: No matching scenario above
+    }
+
+        // Scenario 11: Invalid drop combination (e.g., tab card on group, or other unsupported targets)
+        // - Condition: No matching scenario above
     // - Action: Log error and cleanup
     else {
       console.error('Drop failed: Invalid drag type or target combination', { dragState, targetClass: target.className });
@@ -1139,7 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Scan browser tabs
       chrome.tabs.query({}, (currentTabs) => {
         const currentTabList = currentTabs.map(tab => ({ id: tab.id, windowId: tab.windowId }));
-        
+
         // Check browser tabs for no title and empty URL
         const hasInvalidBrowserTab = currentTabs.some(tab => (!tab.title || tab.title === '') && (!tab.url || tab.url === ''));
 

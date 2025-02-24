@@ -1,5 +1,3 @@
-/* Tab Manager */
-
 /* Reset default margins and set font */
 body {
   margin: 0;
@@ -258,7 +256,6 @@ button:hover {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 10px;
-  min-height: 100px;
   perspective: 1000px;
 }
 
@@ -273,7 +270,7 @@ button:hover {
   border-radius: 8px;
   padding: 15px;
   width: 200px;
-  min-height: 80px;
+  min-height: 55px;
   user-select: none;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -288,7 +285,6 @@ button:hover {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 100px;
   width: 180px;
   padding: 8px 8px 8px 32px; /* Extra left padding for icon */
 }
@@ -368,13 +364,6 @@ button:hover {
   margin-bottom: 4px;
 }
 
-/* ID section in right panel tab cards (removed from middle panel) */
-#tabs-panel .tab-card .id-section {
-  font-size: 11px;
-  color: #555;
-  text-align: right;
-}
-
 /* Collection group container in left panel */
 .collection-group {
   background: #e9ecef;
@@ -423,14 +412,14 @@ button:hover {
   flex-grow: 1; /* Allow it to take available space */
 }
 
-/* Collection card styling */
+/* Collection card styling - smaller size */
 .collection {
   background: #fff;
   border: 2px solid #ccc;
   border-radius: 8px;
-  padding: 5px 15px 1px 15px; /* Updated padding: top 5px, right 15px, bottom 1px, left 15px */
+  padding: 5px 10px; /* Reduced padding for smaller height */
   width: 180px;
-  min-height: 60px; /* Reduced from 80px for less height */
+  min-height: 40px; /* Reduced from 60px to make smaller */
   cursor: move;
   user-select: none;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -442,9 +431,10 @@ button:hover {
 
 .collection h3 {
   margin: 0;
-  font-size: 20px; /* Increased from implicit default (~16px) for larger title */
-  line-height: 1.2; /* Adjusted for readability */
+  font-size: 16px; /* Reduced from 20px for smaller card */
+  line-height: 1.2;
   color: #333;
+  display: inline-block; /* Inline with buttons */
 }
 
 /* Drag-over states for collections and groups */
@@ -485,34 +475,55 @@ button:hover {
 }
 
 /* Buttons within collections */
-.collection-buttons {
-  margin-top: 5px; /* Reduced from 10px for less space under buttons */
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.collection-buttons .rename-btn {
+.collection .rename-btn {
+  position: absolute;
+  top: 5px;
+  right: 30px; /* Left of delete button */
+  width: 20px;
+  height: 20px;
+  padding: 0;
   background: #0d6efd;
   color: white;
-  padding: 5px 15px;
-  font-size: 14px;
-  border-radius: 0.25rem;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.2s ease;
 }
 
-.collection-buttons .rename-btn:hover {
+.collection:hover .rename-btn {
+  opacity: 1; /* Show on hover */
+}
+
+.collection .rename-btn:hover {
   background: #0b5ed7;
 }
 
-.collection-buttons .delete-btn {
+.collection .delete-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px; /* Rightmost position */
+  width: 20px;
+  height: 20px;
+  padding: 0;
   background: #dc3545;
   color: white;
-  padding: 5px 15px;
-  font-size: 14px;
-  border-radius: 0.25rem;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.2s ease;
 }
 
-.collection-buttons .delete-btn:hover {
+.collection:hover .delete-btn {
+  opacity: 1; /* Show on hover */
+}
+
+.collection .delete-btn:hover {
   background: #c82333;
 }
 

@@ -1,4 +1,3 @@
-/* Tab Manager - Drag Start Handler */
 
 import { collectionsData, selectedCollectionIndex } from './script.js'; // Import from script.js
 
