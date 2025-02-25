@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Tab Manager</title> <!-- Updated title -->
+  <title>My Tab Manager</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -25,6 +25,7 @@
     <div id="collection-content"></div>
     <button id="open-all-tabs">Open All Tabs</button>
     <button id="open-all-new-window">Open All in New Window</button>
+    <button id="remove-all-tabs">Remove All</button>
   </div>
 
   <!-- Divider between middle and right panels -->
@@ -37,13 +38,8 @@
   </div>
 </div>
 
-<!-- Import dragStart.js as a module -->
-<script type="module">
-  import { dragStart, dragState, scrollPosition } from './dragStart.js';
-  window.dragStart = dragStart;
-  window.dragState = dragState;
-  window.scrollPosition = scrollPosition;
-</script>
+<!-- Load dragStart.js as a module -->
+<script type="module" src="dragStart.js"></script>
 
 <!-- Load main script as a module -->
 <script type="module" src="script.js"></script>

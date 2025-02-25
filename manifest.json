@@ -8,8 +8,8 @@
     "default_icon": "icon.png"
   },
   "chrome_url_overrides": {
-        "newtab": "index.html"
-    },
+    "newtab": "index.html"
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -25,7 +25,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["index.html", "styles.css", "script.js", "pdf.png"],
+      "resources": ["index.html", "styles.css", "script.js", "dragStart.js", "pdf.png"],
       "matches": ["<all_urls>"]
     }
   ]

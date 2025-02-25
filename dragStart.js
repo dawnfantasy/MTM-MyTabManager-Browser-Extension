@@ -1,6 +1,3 @@
-
-import { collectionsData, selectedCollectionIndex } from './script.js'; // Import from script.js
-
 export let dragState = { // Exported to be shared with script.js
   type: null, // 'collection', 'window-group', 'tab-card', or null
   element: null, // The DOM element being dragged
@@ -124,3 +121,8 @@ export function dragStart(e) {
     return;
   }
 }
+
+// Assign exported variables and function to window for global access
+window.dragStart = dragStart;
+window.dragState = dragState;
+window.scrollPosition = scrollPosition;
