@@ -972,8 +972,8 @@ document.addEventListener('DOMContentLoaded', () => {
             cleanupDrag(dragState.element);
         }
 
-            // Scenario 7: Live card dragged onto live group (right to right)
-        // - Reorders in same window or moves to new window, refreshes right panel
+            // Scenario 7: Live card dragged onto live group or another card in same group (right to right)
+// - Reorders to target card’s position in same window or moves to new window, refreshes right panel
         else if (dragState.type === 'tab-card' && target.classList.contains('window-group') && e.dataTransfer.getData('source') === 'tabs-panel-tab') {
             console.log('Dropping live card onto live group', {
                 tabId: dragState.tabData ? dragState.tabData.id : 'unknown',
@@ -991,21 +991,53 @@ document.addEventListener('DOMContentLoaded', () => {
             const tabId = dragState.tabData.id;
 
             if (sourceWindowId === targetWindowId) {
-                const container = target.querySelector('.tab-card-container');
-                const dropIndex = getDropPositionInWindowGroup(container, e.clientX, e.clientY);
-                console.log('Reordering live card within live group:', { tabId, targetWindowId, dropIndex });
+                const targetCard = e.target.closest('.tab-card:not(.dragging)'); // Find card dropped onto
 
-                chrome.tabs.move(tabId, { windowId: targetWindowId, index: dropIndex }, () => {
-                    if (chrome.runtime.lastError) {
-                        console.error('Error reordering live card:', chrome.runtime.lastError);
-                    } else {
-                        console.log('Live card reordered successfully:', { tabId, newIndex: dropIndex });
-                        loadAllTabs();
-                        tabsPanel.scrollTop = scrollPosition;
-                    }
-                    cleanupDrag(dragState.element);
-                });
-            } else {
+                if (targetCard) { // Dropped on a specific card
+                    const sourceIndex = dragState.tabData.index; // Original index from Chrome tab data
+                    const targetIndex = parseInt(targetCard.dataset.index); // Target card’s index in DOM (not Chrome index yet)
+
+                    // Map DOM index to Chrome tab index
+                    chrome.tabs.query({ windowId: targetWindowId }, (tabs) => {
+                        const targetTab = tabs.find(tab => tab.id === parseInt(targetCard.dataset.tabId));
+                        const targetChromeIndex = targetTab ? targetTab.index : targetIndex;
+
+                        console.log('Reordering live card within live group:', { tabId, targetWindowId, sourceIndex, targetChromeIndex });
+
+                        if (sourceIndex === targetChromeIndex) {
+                            console.log('Dropped on same card - no reorder needed');
+                            cleanupDrag(dragState.element);
+                            return;
+                        }
+
+                        chrome.tabs.move(tabId, { windowId: targetWindowId, index: targetChromeIndex }, () => {
+                            if (chrome.runtime.lastError) {
+                                console.error('Error reordering live card:', chrome.runtime.lastError);
+                            } else {
+                                console.log('Live card reordered successfully:', { tabId, newIndex: targetChromeIndex });
+                                loadAllTabs();
+                                tabsPanel.scrollTop = scrollPosition;
+                            }
+                            cleanupDrag(dragState.element);
+                        });
+                    });
+                } else { // Dropped on group, not a card - use row-based fallback
+                    const container = target.querySelector('.tab-card-container');
+                    const dropIndex = getDropPositionInWindowGroup(container, e.clientX, e.clientY);
+                    console.log('Reordering live card within live group (row-based):', { tabId, targetWindowId, dropIndex });
+
+                    chrome.tabs.move(tabId, { windowId: targetWindowId, index: dropIndex }, () => {
+                        if (chrome.runtime.lastError) {
+                            console.error('Error reordering live card:', chrome.runtime.lastError);
+                        } else {
+                            console.log('Live card reordered successfully:', { tabId, newIndex: dropIndex });
+                            loadAllTabs();
+                            tabsPanel.scrollTop = scrollPosition;
+                        }
+                        cleanupDrag(dragState.element);
+                    });
+                }
+            } else { // Different window: move and append
                 console.log('Moving live card to new live group:', { tabId, fromWindowId: sourceWindowId, toWindowId: targetWindowId });
 
                 chrome.tabs.move(tabId, { windowId: targetWindowId, index: -1 }, () => {
