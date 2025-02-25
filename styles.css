@@ -733,3 +733,16 @@ button:hover {
   background: #c82333; /* Darker red on hover */
 }
 
+/* Watermark for duplicated live cards */
+.duplicate-watermark {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: rgba(220, 53, 69, 0.8); /* Red with slight transparency */
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}

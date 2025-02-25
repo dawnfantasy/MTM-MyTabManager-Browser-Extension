@@ -247,12 +247,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 groupDiv.draggable = true;
                 groupDiv.dataset.windowId = windowId;
                 groupDiv.innerHTML = `
-          <h3>Window ${idx + 1} (ID: ${windowId})</h3>
-          <button class="hibernate-btn">H</button>
-          <button class="sort-tabs-btn">S</button>
-          <button class="close-window-btn">X</button>
-          <div class="tab-card-container"></div>
-        `;
+        <h3>Window ${idx + 1} (ID: ${windowId})</h3>
+        <button class="hibernate-btn">H</button>
+        <button class="sort-tabs-btn">S</button>
+        <button class="close-window-btn">X</button>
+        <div class="tab-card-container"></div>
+      `;
                 const cardContainer = groupDiv.querySelector('.tab-card-container');
 
                 groupDiv.addEventListener('dragstart', dragStart);
@@ -327,17 +327,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         hibernateGroup.collections.push(hibernateCollection);
                     }
 
-                    windowTabs.forEach(tab => {
+                    // Filter out newtab URLs
+                    const filteredTabs = windowTabs.filter(tab =>
+                        tab.url &&
+                        tab.url !== 'chrome://newtab/' &&
+                        tab.url !== 'edge://newtab/' && // Added Edge new tab filter
+                        tab.url !== 'about:blank' &&
+                        tab.url !== ''
+                    );
+                    filteredTabs.forEach(tab => {
                         hibernateCollection.tabs.push({
                             title: tab.title,
                             url: tab.url,
-                            favIconUrl: tab.favIconUrl || '' // Discard id and windowId
+                            favIconUrl: tab.favIconUrl || ''
                         });
                     });
 
-                    saveCollections();
-                    renderCollections();
-                    if (selectedCollectionIndex === hibernateCollection.collectionId) renderCollectionContent();
+                    if (filteredTabs.length > 0) { // Only save if tabs were added
+                        saveCollections();
+                        renderCollections();
+                        if (selectedCollectionIndex === hibernateCollection.collectionId) renderCollectionContent();
+                    }
 
                     chrome.windows.remove(parseInt(windowId), () => {
                         if (chrome.runtime.lastError) {
@@ -379,42 +389,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const iconClass = isPdf ? 'pdf-icon' : (hasFavicon ? 'favicon-icon' : 'empty-icon');
         const faviconStyle = hasFavicon ? `style="--favicon-url: url('${tab.favIconUrl}');"` : '';
 
-        card.innerHTML = `
+        // Check for duplicate URLs across all tabs
+        chrome.tabs.query({}, (allTabs) => {
+            const duplicates = allTabs.filter(t => t.url === tab.url && t.id !== tab.id);
+            const isDuplicated = duplicates.length > 0;
+
+            card.innerHTML = `
       <span class="card-icon ${iconClass}" ${faviconStyle}></span>
       <div class="title-section">${tab.title}</div>
       <div class="url-section">${tab.url}</div>
       <button class="close-btn">X</button>
+      ${isDuplicated ? '<span class="duplicate-watermark">DUPLICATED</span>' : ''}
     `;
-        // Drag-and-drop listeners for tab card
-        card.addEventListener('dragstart', dragStart);
-        card.addEventListener('dragend', () => cleanupDrag(card));
 
-        // Click to switch to tab
-        card.addEventListener('click', (e) => {
-            if (e.target.className !== 'close-btn') {
-                chrome.tabs.update(tab.id, {active: true}, () => {
-                    if (chrome.runtime.lastError) {
-                        console.error('Error switching to tab:', chrome.runtime.lastError);
-                    } else {
-                        chrome.windows.update(tab.windowId, {focused: true});
-                    }
-                });
-            }
-        });
-        // Close tab button
-        card.querySelector('.close-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            chrome.tabs.remove(tab.id, () => {
-                if (chrome.runtime.lastError) {
-                    console.error('Error closing tab:', chrome.runtime.lastError);
-                } else {
-                    console.log('Tab', tab.id, 'closed successfully');
-                    card.remove();
-                    checkAndCloseEmptyWindow(tab.windowId);
-                    loadAllTabs();
+            // Drag-and-drop listeners for tab card (added after innerHTML to avoid overwriting)
+            card.addEventListener('dragstart', dragStart);
+            card.addEventListener('dragend', () => cleanupDrag(card));
+
+            // Click to switch to tab
+            card.addEventListener('click', (e) => {
+                if (e.target.className !== 'close-btn') {
+                    chrome.tabs.update(tab.id, {active: true}, () => {
+                        if (chrome.runtime.lastError) {
+                            console.error('Error switching to tab:', chrome.runtime.lastError);
+                        } else {
+                            chrome.windows.update(tab.windowId, {focused: true});
+                        }
+                    });
                 }
             });
+
+            // Close tab button
+            card.querySelector('.close-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                chrome.tabs.remove(tab.id, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Error closing tab:', chrome.runtime.lastError);
+                    } else {
+                        console.log('Tab', tab.id, 'closed successfully');
+                        card.remove();
+                        checkAndCloseEmptyWindow(tab.windowId);
+                        loadAllTabs();
+                    }
+                });
+            });
         });
+
         return card;
     }
 
@@ -1133,7 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
             // Scenario 9: Live group dragged onto collection or middle panel (right to left/middle)
-// - Adds all tabs to target collection, updates panels
+// - Adds all non-newtab tabs to target collection, updates panels
         else if (dragState.type === 'window-group' && (target.classList.contains('collection') || target.id === 'collection-content-panel')) {
             console.log('Dropping live group onto collection/middle panel', {
                 windowId: dragState.windowId,
@@ -1183,21 +1203,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     cleanupDrag(dragState.element);
                     return;
                 }
-                tabs.forEach(tab => {
+                const filteredTabs = tabs.filter(tab =>
+                    tab.url &&
+                    tab.url !== 'chrome://newtab/' &&
+                    tab.url !== 'edge://newtab/' && // Added Edge new tab filter
+                    tab.url !== 'about:blank' &&
+                    tab.url !== ''
+                );
+                filteredTabs.forEach(tab => {
                     targetCollection.tabs.push({
                         title: tab.title,
                         url: tab.url,
                         favIconUrl: tab.favIconUrl || ''
                     });
                 });
-                saveCollections();
-                renderCollections();
-                if (selectedCollectionIndex === targetCollection.collectionId) renderCollectionContent();
+                if (filteredTabs.length > 0) { // Only save if tabs were added
+                    saveCollections();
+                    renderCollections();
+                    if (selectedCollectionIndex === targetCollection.collectionId) renderCollectionContent();
+                }
                 loadAllTabs();
                 tabsPanel.scrollTop = scrollPosition;
                 cleanupDrag(dragState.element);
             });
         }
+
             // Scenario 10: Stored card dragged onto live group (middle to right)
         // - Opens new tab in target window, refreshes right panel
         else if (dragState.type === 'tab-card' && target.classList.contains('window-group') && e.dataTransfer.getData('source') === 'collection-content-tab') {
